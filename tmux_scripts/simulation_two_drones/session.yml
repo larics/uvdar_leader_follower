@@ -1,0 +1,95 @@
+name: simulation
+root: ./
+startup_window: leader
+pre_window: export FREQUENCY_LEDS=6; export UAV_NAME=uav1; export RUN_TYPE=simulation; export UAV_TYPE=f450; export WORLD_NAME=simulation
+windows:
+  - roscore:
+      layout: tiled
+      panes:
+        - roscore
+  - gazebo:
+      layout: tiled
+      panes:
+        - waitForRos; roslaunch mrs_simulation simulation.launch world_name:=grass_plane gui:=true
+  - status:
+      layout: tiled
+      panes:
+        - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_status status.launch
+        - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_status status.launch
+  - spawn:
+      layout: tiled
+      panes:
+        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos1.yaml --enable-uv-leds --led-frequencies $FREQUENCY_LEDS $FREQUENCY_LEDS
+        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos2.yaml --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
+  - control:
+      layout: tiled
+      panes:
+        - export UAV_NAME=uav1; waitForOdometry; roslaunch mrs_uav_general core.launch
+        - export UAV_NAME=uav2; waitForOdometry; roslaunch mrs_uav_general core.launch
+  - automatic_start:
+      layout: tiled
+      panes:
+        - export UAV_NAME=uav1; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
+        - export UAV_NAME=uav2; waitForSimulation; roslaunch mrs_uav_general automatic_start.launch
+  - takeoff:
+      layout: tiled
+      panes:
+        # #{ uav1
+        - 'export UAV_NAME=uav1;
+          waitForControl;
+          rosservice call /$UAV_NAME/mavros/cmd/arming 1;
+          sleep 2;
+          rosservice call /$UAV_NAME/mavros/set_mode 0 offboard'
+        # #}
+        # #{ uav2
+        - 'export UAV_NAME=uav2;
+          waitForControl;
+          rosservice call /$UAV_NAME/mavros/cmd/arming 1;
+          sleep 2;
+          rosservice call /$UAV_NAME/mavros/set_mode 0 offboard'
+        # #}
+  - rviz:
+      layout: tiled
+      panes:
+        - waitForControl; roslaunch mrs_uav_testing tf_connector_avoidance.launch
+        - export UAV_NAME=uav1; waitForControl; roslaunch mrs_rviz_plugins load_robot.launch
+        - export UAV_NAME=uav2; waitForControl; roslaunch mrs_rviz_plugins load_robot.launch
+        - waitForControl; sleep 3; roslaunch uvdar_leader_follower rviz.launch
+  - uv_observer:
+      layout: even-vertical
+      panes:
+        - export UAV_NAME=uav2; waitForControl; roslaunch uvdar_leader_follower single_frequency_uvdar.launch
+  - kalman_filter:
+      layout: even-vertical
+      panes:
+        - export UAV_NAME=uav2; waitForControl; roslaunch uvdar_core uvdar_kalman_identified.launch output_frame:=$UAV_NAME/stable_origin
+  - leader:
+      layout: even-vertical
+      panes:
+        - 'export UAV_NAME=uav1;
+          history -s roslaunch uvdar_leader_follower load_leader_trajectory.launch'
+        - 'export UAV_NAME=uav1;
+          history -s rosservice call /$UAV_NAME/control_manager/goto_trajectory_start'
+  - follower:
+      layout: even-vertical
+      panes:
+        - 'export UAV_NAME=uav2;
+          history -s rosservice call /$UAV_NAME/control_manager/goto \"goal: \[11.5, 7.2, 3.0, 0.0\]\"'
+        - 'export UAV_NAME=uav2;
+          history -s roslaunch summer_school_supervisor supervisor.launch'
+  - start_challenge:
+      layout: even-vertical
+      synchronize: after
+      panes:
+        - 'export UAV_NAME=uav1;
+          history -s rosservice call /$UAV_NAME/control_manager/start_trajectory_tracking'
+        - 'export UAV_NAME=uav2;
+          history -s rosservice call /$UAV_NAME/summer_school_2020/start_score_counting'
+  - dynamic_reconfigure:
+      layout: tiled
+      panes:
+        - waitForControl; rosrun rqt_reconfigure rqt_reconfigure
+  - gazebo_camera_follow:
+      layout: tiled
+      panes:
+        - waitForOdometry; gz camera -c gzclient_camera -f uav1; history -s gz camera -c gzclient_camera -f uav2

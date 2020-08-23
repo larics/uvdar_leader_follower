@@ -1,0 +1,7 @@
+main:
+  offset: [0.0, 0.0, 0.0, 0.0]      # offset for all trajectories [x,y,z,heading]
+  delay: [0.0]       # delays before calling the service (in seconds)
+
+timeout_for_calling_services: 3     # maximal waiting time for response after calling service
+
+dt: 0.2

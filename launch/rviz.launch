@@ -1,0 +1,11 @@
+<launch>
+
+  <arg name="name" default="example" />
+
+  <group>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find uvdar_leader_follower)/rviz/$(arg name).rviz" />
+
+  </group>
+
+</launch>
