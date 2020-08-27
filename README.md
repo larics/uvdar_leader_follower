@@ -27,7 +27,7 @@ Your entry point to the system is the the `src/follower.cpp` file. It creates a 
 * recieveUvdar - called every time a new UVDAR message is recieved. This will provide you the estimate of position of the leader UAV, based on the markers visible by the onboard cameras.
 * createReferencePoint - called periodically by the supervisor node. You are expected to provide the onboard controller a new reference point through this method.
 * createSpeedCommand - called periodically by the supervisor node. Alternative to the reference point commands. Allows you to have a deeper level of control by using velocity commands instead of position reference.
-* getCurrentEstimate - uses a simple Kalman filter to estimate the position and velocity of the leader UAV. Filtering the raw UVDAR data will allow you to smooth out the control commands. In return, the camera image will be less shaky and the estimation will be more accurate.
+* getCurrentEstimate - uses a simple Kalman filter to estimate the position and velocity of the leader UAV. Filtering the raw UVDAR data will allow you to smooth out the control commands. In return, the camera image will be less shaky - in our case translation of a UAV generates tilt - and the estimation will be more accurate.
 
 These methods will be called by the `summer_school_supervisor` node running onboard the follower UAV. Do not modify the supervisor node! You will not be able to use the customized code onboard real UAVs during the experiments.
 
