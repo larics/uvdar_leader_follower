@@ -125,8 +125,8 @@
 
 
 
-    <node name="uv_detect" pkg="nodelet" type="nodelet" args="$(arg nodelet) uvdar/UVDARDetector $(arg nodelet_manager)" output="screen" respawn="false"> 
-    <!-- <node name="uv_detect" pkg="nodelet" type="nodelet" args="$(arg nodelet) uvdar/UVDARDetector $(arg nodelet_manager)" output="screen" respawn="true" launch-prefix="debug_roslaunch"> --> 
+    <node name="uv_detect" pkg="nodelet" type="nodelet" args="$(arg nodelet) uvdar/UVDARDetector $(arg nodelet_manager)" output="screen" respawn="false">
+    <!-- <node name="uv_detect" pkg="nodelet" type="nodelet" args="$(arg nodelet) uvdar/UVDARDetector $(arg nodelet_manager)" output="screen" respawn="true" launch-prefix="debug_roslaunch"> -->
       <!-- <node name="uv_detect" pkg="uvdar" type="uv_detector_node" output="screen" launch-prefix="urxvt -e gdb -q -x /home/viktor/gdb.cmds -/-args"> -->
         <!-- <node name="uv_detect" pkg="nodelet" type="nodelet" args="$(arg nodelet) uvdar/UVDARDetector $(arg nodelet_manager)" output="screen" respawn="true" launch-prefix="valgrind -/-tool=callgrind -/-callgrind-out-file=/home/viktor/callgrind.out -/-instr-atstart=no -/-collect-atstart=yes"> --> 
 
@@ -140,10 +140,10 @@
       <param name="justReport" type="bool" value="true"/>
       <param name="threshold" type="int" value="$(arg threshold)"/>
 
-      <!-- <rosparam param="camera_topics"> ["camera_left", "camera_right"] </rosparam> -->
+      <rosparam param="camera_topics"> ["camera_left", "camera_right"] </rosparam>
       <rosparam param="points_seen_topics"> ["points_seen_left", "points_seen_right"] </rosparam>
 
-      <param name="use_masks"         type="bool" value="false"/>
+      <param name="use_masks"         type="bool" value="true"/>
       <rosparam param="mask_file_names" subst_value="True"> ["$(arg calibrations_folder)/masks/$(arg frameNatoName)_$(arg left).png", "$(arg calibrations_folder)/masks/$(arg frameNatoName)_$(arg right).png"] </rosparam>
 
       <remap from="~camera_left" to="/$(arg uav_name)/uvdar_bluefox_left/image_raw"/>
@@ -197,8 +197,8 @@
     <!-- <node name="uvdar_uav_pose_calculator_node" pkg="uvdar_core" type="uvdar_uav_pose_calculator_node" output="screen" launch-prefix="debug_roslaunch"> --> 
     <node name="uvdar_uav_pose_calculator_node" pkg="uvdar_core" type="uvdar_uav_pose_calculator_node" output="screen"  launch-prefix=""> 
       <param name="uav_name" type = "string" value="$(arg uav_name)"/>
-      <param name="debug"		type="bool" value="true"/> 
-      <!-- <param name="debug"		type="bool" value="false"/> --> 
+      <!-- <param name="debug"		type="bool" value="true"/> --> 
+      <param name="debug"		type="bool" value="false"/> 
       <param name="gui"             type="bool" value="false"/>
       <param name="publish_visualization"             type="bool" value="false"/>
       <param name="frequencies_per_target" type="int" value="1"/>

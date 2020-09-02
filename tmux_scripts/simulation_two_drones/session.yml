@@ -1,7 +1,7 @@
 name: simulation
 root: ./
-startup_window: leader
-pre_window: export FREQUENCY_LEDS=6; export UAV_NAME=uav1; export RUN_TYPE=simulation; export UAV_TYPE=f450; export WORLD_NAME=simulation
+startup_window: status
+pre_window: export UAV_NAME=uav1; export RUN_TYPE=simulation; export UAV_TYPE=f450; export WORLD_NAME=simulation
 windows:
   - roscore:
       layout: tiled
@@ -19,7 +19,7 @@ windows:
   - spawn:
       layout: tiled
       panes:
-        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos1.yaml --enable-uv-leds --led-frequencies $FREQUENCY_LEDS $FREQUENCY_LEDS
+        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos1.yaml --enable-uv-leds --led-frequencies 15 15
         - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos2.yaml --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
   - control:
       layout: tiled
@@ -58,7 +58,7 @@ windows:
   - uv_observer:
       layout: even-vertical
       panes:
-        - export UAV_NAME=uav2; waitForControl; roslaunch uvdar_leader_follower single_frequency_uvdar.launch
+        - export UAV_NAME=uav2; export TARGET_FREQUENCY_LEDS=15; waitForControl; roslaunch uvdar_leader_follower single_frequency_uvdar.launch
   - kalman_filter:
       layout: even-vertical
       panes:
@@ -73,8 +73,6 @@ windows:
   - follower:
       layout: even-vertical
       panes:
-        - 'export UAV_NAME=uav2;
-          history -s rosservice call /$UAV_NAME/control_manager/goto \"goal: \[11.5, 7.2, 3.0, 0.0\]\"'
         - 'export UAV_NAME=uav2;
           history -s roslaunch summer_school_supervisor supervisor.launch'
   - start_challenge:

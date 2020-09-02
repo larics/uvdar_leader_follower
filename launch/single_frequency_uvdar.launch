@@ -56,7 +56,7 @@
 
   <arg name="beacon" default="false"/>
 
-  <arg name="frequency1" default="$(optenv FREQUENCY_LEDS)"/>
+  <arg name="frequency1" default="$(optenv TARGET_FREQUENCY_LEDS)"/>
 
   <!-- ideal angle: 1.221730476 - pi/2 -->
 

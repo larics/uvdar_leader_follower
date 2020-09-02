@@ -26,8 +26,8 @@ pre_input="mkdir -p $MAIN_DIR/$PROJECT_NAME"
 # 'name' 'command'
 # DO NOT PUT SPACES IN THE NAMES
 input=(
-  'Rosbag' 'waitForOffboard; rosrun mrs_uav_general record.sh
-'
+  # 'Rosbag' 'waitForOffboard; rosrun mrs_uav_general record.sh
+# '
   'Sensors' 'waitForRos; roslaunch mrs_uav_general sensors.launch
 '
   'Status' 'waitForRos; roslaunch mrs_uav_status status.launch
@@ -36,7 +36,7 @@ input=(
 '
   'AutoStart' 'waitForRos; roslaunch mrs_uav_general automatic_start.launch
 '
-  'UvObserver' 'waitForControl; export FREQUENCY_LEDS=15; roslaunch uvdar_leader_follower single_frequency_uvdar_rw.launch
+  'UvObserver' 'export TARGET_FREQUENCY_LEDS=6; waitForControl; roslaunch uvdar_leader_follower single_frequency_uvdar_rw.launch
 '
   'KalmanFilter' 'waitForControl; roslaunch uvdar_core uvdar_kalman_identified.launch output_frame:='"$UAV_NAME"'/stable_origin
 '  
