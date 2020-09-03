@@ -64,7 +64,7 @@ def generate_spline():
     x_resampled, y_resampled= splev(u_resampled, tck, der=0)
 
     home = expanduser("~")
-    fname = home + '/workspace/src/summer_school_2020/trajectories/leader1_' + str(v) + 'ms.txt'
+    fname = home + '/workspace/src/uvdar_leader_follower/trajectories/leader_' + str(v) + 'ms.txt'
     with open(fname, 'w', encoding='utf-8') as f:
         for i in range(0, len(x_resampled)):
             x = x_resampled[i];
