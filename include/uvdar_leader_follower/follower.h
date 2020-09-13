@@ -2,6 +2,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <mrs_msgs/TrajectoryReference.h>
+#include <mrs_msgs/PositionCommand.h>
 #include <mrs_msgs/SpeedTrackerCommand.h>
 #include <mrs_msgs/ReferenceStamped.h>
 #include <mrs_msgs/String.h>
@@ -23,6 +24,14 @@ struct ReferencePoint
   bool            use_for_control;
 };
 
+struct ReferenceTrajectory
+{
+  std::vector<Eigen::Vector3d> positions;
+  std::vector<double>          headings;
+  double                       sampling_time;
+  bool                         use_for_control;
+};
+
 struct SpeedCommand
 {
   Eigen::Vector3d velocity;
@@ -40,12 +49,14 @@ public:
   ~FollowerController() {
   }
 
-  ReferencePoint createReferencePoint();
-  SpeedCommand   createSpeedCommand();
+  ReferencePoint      createReferencePoint();
+  ReferenceTrajectory createReferenceTrajectory();
+  SpeedCommand        createSpeedCommand();
 
   uvdar_leader_follower::FollowerConfig initialize(mrs_lib::ParamLoader& param_loader);
 
   void receiveOdometry(const nav_msgs::Odometry& odometry_msg);
+  void receiveTrackerOutput(const mrs_msgs::PositionCommand& position_cmd);
   void receiveUvdar(const geometry_msgs::PoseWithCovarianceStamped& uvdar_msg);
   void dynamicReconfigureCallback(uvdar_leader_follower::FollowerConfig& config, uint32_t level);
 
