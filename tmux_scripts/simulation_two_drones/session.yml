@@ -90,11 +90,8 @@ windows:
           history -s rosservice call /$UAV_NAME/control_manager/start_trajectory_tracking'
         - 'export UAV_NAME=uav2;
           history -s rosservice call /$UAV_NAME/summer_school_2020/start_score_counting'
-  - dynamic_reconfigure:
-      layout: tiled
-      panes:
-        - waitForControl; rosrun rqt_reconfigure rqt_reconfigure
   - gazebo_camera_follow:
       layout: tiled
       panes:
         - waitForOdometry; gz camera -c gzclient_camera -f uav1; history -s gz camera -c gzclient_camera -f uav2
+        - waitForOdometry; sleep 2; ~/.i3/layout_manager.sh layout.json
