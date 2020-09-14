@@ -20,7 +20,7 @@ windows:
       layout: tiled
       panes:
         - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos1.yaml --enable-uv-leds --led-frequencies 15 15
-        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos2.yaml --enable-uv-camera --uv-camera-calibration-file "$HOME/mrs_workspace/src/uav_modules/ros_packages/uvdar_meta/uvdar_core/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
+        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos2.yaml --enable-uv-camera --uv-camera-calibration-file "$(rospack find uvdar_core)/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
   - control:
       layout: tiled
       panes:
