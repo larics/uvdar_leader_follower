@@ -36,7 +36,6 @@ The provided code also includes a very crude solution. This solution will take t
 ```bash
 ./start.sh
 ````
-%% > **__NOTE:__** The script may require some modification in the spawn block (around line 23) to set an existing path to the calibration file on your computer. Make sure the filepath points to the `uvdar_core` package on your device.
 
 ## Implementation tips
 You may notice that the reference solution does not produce a smooth control input for the follower UAV. Also, the following may break after a while. The jumps in follower motion are caused by multiple contributing factors:
