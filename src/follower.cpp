@@ -145,7 +145,7 @@ void FollowerController::receiveUvdar(const geometry_msgs::PoseWithCovarianceSta
 
   leader_position = leader_new_position;
 
-  if (use_estimator) {
+  if (use_estimator && is_initialized) {
     estimator.fuse(leader_new_position);
   }
 }
