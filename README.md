@@ -25,7 +25,6 @@ You are given a system consisting of two autonomous unmanned aerial vehicles (UA
 One of the UAVs is designated as a formation leader. It will follow a smooth, pre-defined trajectory. This UAV is out of your control and you should not interfere with the onboard control software.
 
 The second UAV is designated as a follower. This is the vehicle, that you will be directly interacting with.
-> **__NOTE:__** Minor changes may still be made to the assignment.
 
 Your task is to develop a control routine for the follower such that it keeps up with the leader for as long as possible. We have prepared some C++ code to get you started.
 Your entry point to the system is the [`src/follower.cpp`](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/src/follower.cpp) file. It creates a library, which is periodically called by the supervisor node to provide new control commands to the UAV. The file already contains the following methods:
@@ -39,7 +38,7 @@ Your entry point to the system is the [`src/follower.cpp`](https://github.com/ct
 * createSpeedCommand - called periodically by the supervisor node. Alternative to the reference point commands. Allows you to have a deeper level of control by using velocity commands instead of position reference.
 * getCurrentEstimate - uses a simple Kalman filter to estimate the position and velocity of the leader UAV. Filtering the raw UVDAR data will allow you to smooth out the control commands. Aggressive manoeuvres generate tilt, which may result in loss of visual contact with the leader.
 
-These methods will be called by the [summer_school_supervisor(https://github.com/ctu-mrs/summer_school_supervisor) node running onboard the follower UAV. **Do not modify the supervisor node! The real UAVs will use the default one during the experiments.**
+These methods will be called by the [summer_school_supervisor](https://github.com/ctu-mrs/summer_school_supervisor) node running onboard the follower UAV. **Do not modify the supervisor node! The real UAVs will use the default one during the experiments.**
 
 ## Simulation and a Reference solution
 The provided code also includes a very crude solution. This solution will take the latest known leader pose, add a desired offset (loaded from a config file), and set it as the reference point for the follower. You may try running this code by opening the `tmux_scripts/two_drones_uvdar` folder and running the script:
