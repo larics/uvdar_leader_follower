@@ -13,7 +13,7 @@ output: pdf_document
 In this task, we will explore a state-of-the-art system for coordinated motion of multiple robots without direct communication. The system consists of two parts - blinking UV markers, which are fitted to each robot, and onboard cameras capable of UV-only sensing. Using this unique approach, the robots are capable of determining the relative position of their neighbors without the need to exchange any information via a communication link. This allows the UAVs to operate in environments with dense electromagnetic interference or coordinate motion of multiple robots with mutually incompatible localization systems (e.g. GPS and SLAM).
 
 ## Installation
-1) The installation requires the open-source [MRS system] (https://github.com/ctu-mrs/mrs_uav_system), or if you prefer to install it separately, you will need the [uav_core](https://github.com/ctu-mrs/uav_core) and [simulation](https://github.com/ctu-mrs/simulation) repositories.
+1) The installation requires the open-source [MRS system](https://github.com/ctu-mrs/mrs_uav_system), or if you prefer to install it separately, you will need the [uav_core](https://github.com/ctu-mrs/uav_core) and [simulation](https://github.com/ctu-mrs/simulation) repositories.
 2) You will also need to install the [UVDAR core](https://github.com/ctu-mrs/uvdar) and the [UVDAR plugin](https://github.com/ctu-mrs/uvdar_gazebo_plugin) for the Gazebo simulator.
 3) Further install the [summer_school_supervisor](https://github.com/ctu-mrs/summer_school_supervisor), which will be enforcing the rules of the competition for this task.
 4) Finally, you will need to install the [trajectory_loader](https://github.com/ctu-mrs/trajectory_loader). This package will help you load a trajectory for the leader UAV, which will come in handy for testing in simulations.
@@ -71,7 +71,7 @@ You may notice that the reference solution does not produce a smooth control inp
   * Aggressive control manoeuvres will also move the camera more, and make it harder to estimate the leader position accurately.
   * Setting a single reference point to the controller will cause the UAV to decelerate and stop moving once the destination has been reached.
 
-LET'S IMPROVE THE FOLLOWER CODE.
+### Let's improve the follower code
 There are a few steps that may help you. It is not necessary to follow them. You may skip this section completely and craft a solution on your own.
 
   * Experiment with the desired offset. You may get better results just by adjusting the distance between the leader and the follower. You can use the [config/follower.yaml](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/config/follower.yaml) if you want to change the settings without the need for compilation. (You will still need to restart the node.)
@@ -81,3 +81,11 @@ There are a few steps that may help you. It is not necessary to follow them. You
   * If multiple commands are available at the same time, only the highest ranking command in the following hierarchy will be used: SpeedCommand > ReferenceTrajectory > ReferencePoint.
   * In computer vision, distance to an object tends to be more difficult to estimate than its bearing. Therefore, the position tracking works much better if the line of sight from camera is directly perpendicular to the direction of leader's motion. If the leader moves along the line of sight from the camera, retrieving the position becomes much more difficult.
   * You are not required to perfectly copy the leader's trajectory. You only have to track the leader for as long as possible.
+
+## Things to avoid
+
+* Collisions (wow!) - When using the ReferencePoint or ReferenceTrajectory control, the UAVs will automatically avoid collisions. The avoidance is done by moving the follower into a higher altitude. This mechanism will be triggered once the distance between the vehicles is less than 3 m. During this time, all of your commands will be overriden. Triggering the collision avoidance will not result in a score penalty, however, the leader may evade you in the meantime. If you are using the SpeedCommand for control and get within 3 m of the leader, the follower fill fallback to the MPC control and perform the avoidance manoeuver as well.
+* Height changes. The leader will always fly at a height of 3 m. Control commands with height below 2 m and above 4 m will be discarded by the follower.
+* Erratic position changes. Position reference, which is over 15 m apart from the current UAV position will be discarded.
+* Pushing physical limits of the UAV. Velocity command larger than 5 m/s will be discarded.
+* Violating these restrictions 10 times in a row will terminate the challenge.
