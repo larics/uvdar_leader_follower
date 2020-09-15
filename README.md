@@ -28,6 +28,7 @@ The second UAV is designated as a follower. This is the vehicle, that you will b
 
 Your task is to develop a control routine for the follower such that it keeps up with the leader for as long as possible. We have prepared some C++ code to get you started.
 Your entry point to the system is the [`src/follower.cpp`](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/src/follower.cpp) file. It creates a library, which is periodically called by the supervisor node to provide new control commands to the UAV. The file already contains the following methods:
+
 * initialize - called only once on startup. This method is suitable for loading parameters from a configuration file. This way, you can tweak the parameters without needing to compile the package with every change. The default configuration file is [`config/follower.yaml`](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/config/follower.yaml).
 * dynamicReconfigureCallback - use is optional, recommended for fine tuning of system parameters on the fly. Allows you to tweak system parameters while the program is running using the [rqt_reconfigure](http://wiki.ros.org/rqt_reconfigure). The default dynamic configuration file is [`cfg/Follower.cfg`](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/cfg/Follower.cfg)
 * receiveOdometry - called every time a new odometry message is received. This will provide you with the latest information on the state of the follower UAV (position, orientation, velocity)
@@ -38,7 +39,7 @@ Your entry point to the system is the [`src/follower.cpp`](https://github.com/ct
 * createSpeedCommand - called periodically by the supervisor node. Alternative to the reference point commands. Allows you to have a deeper level of control by using velocity commands instead of position reference.
 * getCurrentEstimate - uses a simple Kalman filter to estimate the position and velocity of the leader UAV. Filtering the raw UVDAR data will allow you to smooth out the control commands. Aggressive manoeuvres generate tilt, which may result in loss of visual contact with the leader.
 
-These methods will be called by the [summer_school_supervisor](https://github.com/ctu-mrs/summer_school_supervisor) node running onboard the follower UAV. **Do not modify the supervisor node! The real UAVs will use the default one during the experiments.**
+These methods will be called by the [`summer_school_supervisor`](https://github.com/ctu-mrs/summer_school_supervisor) node running onboard the follower UAV. **Do not modify the supervisor node! The real UAVs will use the default one during the experiments!**
 
 ## Simulation and a Reference solution
 The provided code also includes a very crude solution. This solution will take the latest known leader pose, add a desired offset (loaded from a config file), and set it as the reference point for the follower. You may try running this code by opening the `tmux_scripts/two_drones_uvdar` folder and running the script:
@@ -72,6 +73,7 @@ You may notice that the reference solution does not produce a smooth control inp
 
 LET'S IMPROVE THE FOLLOWER CODE.
 There are a few steps that may help you. It is not necessary to follow them. You may skip this section completely and craft a solution on your own.
+
   * Experiment with the desired offset. You may get better results just by adjusting the distance between the leader and the follower. You can use the [config/follower.yaml](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/config/follower.yaml) if you want to change the settings without the need for compilation. (You will still need to restart the node.)
   * Experiment with the control action rate, also adjustable in the config file.
   * Estimate the leader's velocity. An estimator based on the Kalman filter is already provided in the code, but in the default solution it is unused. Filter parameters may be loaded from the config file as well.
