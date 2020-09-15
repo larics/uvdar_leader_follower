@@ -60,7 +60,8 @@ windows:
       panes:
         # leader will not avoid collisions
         - export UAV_NAME=uav1; waitForControl; rosservice call /$UAV_NAME/control_manager/mpc_tracker/collision_avoidance 0
-        - export UAV_NAME=uav2; waitForControl; rosservice call /$UAV_NAME/constraint_manager/set_constraints fast
+        - export UAV_NAME=uav2; waitForControl; rosservice call /$UAV_NAME/constraint_manager/set_constraints slow
+        # you can experiment with controller settings by changing the follower constraints to medium. Beware: faster acceleration will produce more tilt -> less stable camera image
   - uv_observer:
       layout: even-vertical
       panes:

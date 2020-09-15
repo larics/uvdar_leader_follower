@@ -46,7 +46,9 @@ The provided code also includes a very crude solution. This solution will take t
 ```bash
 ./start.sh
 ````
+
 Upon running the script, you should see 3 windows opening up:
+
 * Gazebo - realistic simulator with 3D graphics visualization
 * RVIZ - lightweight visualization tool for graphic representation of ROS messages
 * UVDAR simulation - two mostly black screens, which represent the view of the cameras onboard the follower UAV
@@ -58,7 +60,7 @@ Upon running the script, you should see 3 windows opening up:
 
 ### Starting the task
 You may notice, that your terminal opened multiple tabs. Consult the first page of the [MRS Cheatsheet](https://github.com/ctu-mrs/mrs_cheatsheet) if you need help navigating the tabs and panes.
-**After the UAVs take off, your input has to be provided manually.** 
+**After the UAVs take off, your input has to be provided manually.**
 
 * Navigate to the `goto_start` tab, hit up arrow key and then enter. There is a pre-filled series of commands, which will load the Leader trajectory and take both UAVs to their starting position.
 * Switch to the `follower` tab, hit the up arrow and then enter. The pre-filled command will launch the `summer_school_supervisor`. This is the program, which will periodically call your code.
@@ -66,10 +68,12 @@ You may notice, that your terminal opened multiple tabs. Consult the first page 
 * Now, you can navigate back to the `follower` tab, and observe the simulation. Once the visual contact is broken, the process in the follower tab will print out the score.
 
 ## Implementation tips
+
 You may notice that the reference solution does not produce a smooth control input for the follower UAV. Also, the following may break after a while. The jumps in follower motion are caused by multiple contributing factors:
-  * The camera as well as the target do not stay completely still, even during hovering.
-  * Aggressive control manoeuvres will also move the camera more, and make it harder to estimate the leader position accurately.
-  * Setting a single reference point to the controller will cause the UAV to decelerate and stop moving once the destination has been reached.
+
+* The camera as well as the target do not stay completely still, even during hovering.
+* Aggressive control manoeuvres will also move the camera more, and make it harder to estimate the leader position accurately.
+* Setting a single reference point to the controller will cause the UAV to decelerate and stop moving once the destination has been reached.
 
 ### Let's improve the follower code
 There are a few steps that may help you. It is not necessary to follow them. You may skip this section completely and craft a solution on your own.
@@ -88,4 +92,4 @@ There are a few steps that may help you. It is not necessary to follow them. You
 * Height changes. The leader will always fly at a height of 3 m. Control commands with height below 2 m and above 4 m will be discarded by the follower.
 * Erratic position changes. Position reference, which is over 15 m apart from the current UAV position will be discarded.
 * Pushing physical limits of the UAV. Velocity command larger than 5 m/s will be discarded.
-* Violating these restrictions 10 times in a row will terminate the challenge.
+* Violating these restrictions 10 times in a row will result in challenge termination.
