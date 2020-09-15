@@ -3,8 +3,8 @@
 		"border": "normal",
 		"floating": "auto_off",
 		"fullscreen_mode": 0,
-		"layout": "splitv",
-		"percent": 0.333333333333333,
+		"layout": "splith",
+		"percent": 0.25,
 		"type": "con",
 		"nodes": [
 			{
@@ -15,57 +15,29 @@
 				"type": "con",
 				"nodes": [
 					{
-						"border": "normal",
+						"border": "pixel",
+						"current_border_width": 3,
 						"floating": "auto_off",
-						"layout": "splitv",
-						"percent": 0.5,
-						"type": "con",
-						"nodes": [
+						"geometry": {
+							"height": 460,
+							"width": 724,
+							"x": 0,
+							"y": 0
+						},
+						"name": "./start.sh",
+						"percent": 0.34,
+						"swallows": [
 							{
-								"border": "pixel",
-								"current_border_width": 3,
-								"floating": "auto_off",
-								"geometry": {
-									"height": 460,
-									"width": 804,
-									"x": 0,
-									"y": 0
-								},
-								"name": "example.rviz - RViz",
-								"percent": 0.5,
-								"swallows": [
-									{
-										"instance": "^rviz$"
-									}
-								],
-								"type": "con"
-							},
-							{
-								"border": "pixel",
-								"current_border_width": 3,
-								"floating": "auto_off",
-								"geometry": {
-									"height": 460,
-									"width": 804,
-									"x": 0,
-									"y": 0
-								},
-								"name": "./start.sh",
-								"percent": 0.5,
-								"swallows": [
-									{
-										"instance": "^urxvt$"
-									}
-								],
-								"type": "con"
+								"instance": "^urxvt$"
 							}
-						]
+						],
+						"type": "con"
 					},
 					{
 						"border": "normal",
 						"floating": "auto_off",
 						"layout": "splitv",
-						"percent": 0.5,
+						"percent": 0.66,
 						"type": "con",
 						"nodes": [
 							{
@@ -73,35 +45,16 @@
 								"current_border_width": 3,
 								"floating": "auto_off",
 								"geometry": {
-									"height": 460,
-									"width": 804,
-									"x": 0,
-									"y": 0
+									"height": 1030,
+									"width": 936,
+									"x": 2886,
+									"y": 32
 								},
-								"name": "Gazebo",
-								"percent": 0.5,
+								"name": "rviz.rviz* - RViz",
+								"percent": 1,
 								"swallows": [
 									{
-										"instance": "^gazebo$"
-									}
-								],
-								"type": "con"
-							},
-							{
-								"border": "pixel",
-								"current_border_width": 3,
-								"floating": "user_off",
-								"geometry": {
-									"height": 460,
-									"width": 804,
-									"x": 0,
-									"y": 0
-								},
-								"name": "ocv_uvdar_blink_uav2",
-								"percent": 0.5,
-								"swallows": [
-									{
-										"instance": "^ocv_uvdar_blink_uav2$"
+										"instance": "^rviz$"
 									}
 								],
 								"type": "con"

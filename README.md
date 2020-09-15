@@ -38,7 +38,6 @@ The provided code also includes a very crude solution. This solution will take t
 ```bash
 ./start.sh
 ````
-
 Upon running the script, you should see 3 windows opening up:
 * Gazebo - realistic simulator with 3D graphics visualization
 * RVIZ - lightweight visualization tool for graphic representation of ROS messages
