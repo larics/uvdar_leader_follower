@@ -1,3 +1,11 @@
+---
+title: "Practical seminar task assignment: Leader - Follower"
+author: Multi-robot Systems (MRS) group at Czech Technical University in Prague
+date: September 2020
+geometry: margin=1.1cm
+output: pdf_document
+---
+
 # MRS Summer School 2020
 
 ## Leader-follower operation without communication
