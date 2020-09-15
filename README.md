@@ -24,19 +24,39 @@ Your entry point to the system is the [`src/follower.cpp`](https://github.com/ct
 * initialize - called only once on startup. This method is suitable for loading parameters from a configuration file. This way, you can tweak the parameters without needing to compile the package with every change. The default configuration file is [`config/follower.yaml`](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/config/follower.yaml).
 * dynamicReconfigureCallback - use is optional, recommended for fine tuning of system parameters on the fly. Allows you to tweak system parameters while the program is running using the [rqt_reconfigure](http://wiki.ros.org/rqt_reconfigure). The default dynamic configuration file is [`cfg/Follower.cfg`](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/cfg/Follower.cfg)
 * receiveOdometry - called every time a new odometry message is received. This will provide you with the latest information on the state of the follower UAV (position, orientation, velocity)
+* receiveTrackerOutput - called every time a new message is received. This will provide you with the actual state of the UAV, which already compensates for external disturbances. Use this instead of odometry, if you want to control the UAV relative to its actual position.
 * receiveUvdar - called every time a new UVDAR message is received. This will provide you the estimate of position of the leader UAV, based on the markers visible by the onboard cameras.
 * createReferencePoint - called periodically by the supervisor node. You are expected to provide the onboard controller a new reference point through this method.
+* createReferenceTrajectory - called periodically by the supervisor node. You are expected to provide the onboard controller a series of reference points through this method.
 * createSpeedCommand - called periodically by the supervisor node. Alternative to the reference point commands. Allows you to have a deeper level of control by using velocity commands instead of position reference.
-* getCurrentEstimate - uses a simple Kalman filter to estimate the position and velocity of the leader UAV. Filtering the raw UVDAR data will allow you to smooth out the control commands. In return, the camera image will be less shaky - in our case translation of a UAV generates tilt - and the estimation will be more accurate.
+* getCurrentEstimate - uses a simple Kalman filter to estimate the position and velocity of the leader UAV. Filtering the raw UVDAR data will allow you to smooth out the control commands. Aggressive manoeuvres generate tilt, which may result in loss of visual contact with the leader.
 
-These methods will be called by the `summer_school_supervisor` node running onboard the follower UAV. Do not modify the supervisor node! You will not be able to use the customized code onboard real UAVs during the experiments.
+These methods will be called by the [summer_school_supervisor(https://github.com/ctu-mrs/summer_school_supervisor) node running onboard the follower UAV. **Do not modify the supervisor node! The real UAVs will use the default one during the experiments.**
 
 ## Simulation and a Reference solution
 The provided code also includes a very crude solution. This solution will take the latest known leader pose, add a desired offset (loaded from a config file), and set it as the reference point for the follower. You may try running this code by opening the `tmux_scripts/two_drones_uvdar` folder and running the script:
 ```bash
 ./start.sh
 ````
-%% > **__NOTE:__** The script may require some modification in the spawn block (around line 23) to set an existing path to the calibration file on your computer. Make sure the filepath points to the `uvdar_core` package on your device.
+
+Upon running the script, you should see 3 windows opening up:
+* Gazebo - realistic simulator with 3D graphics visualization
+* RVIZ - lightweight visualization tool for graphic representation of ROS messages
+* UVDAR simulation - two mostly black screens, which represent the view of the cameras onboard the follower UAV
+
+### How to confirm everything works
+* In the Gazebo GUI, check that the time at the bottom of the window is running.
+* After a few seconds, you should see two drones. The drones will take off automatically.
+* After the takeoff, you should see markers in one of the UVDAR camera views. These represent the blinking LED lights on the leader drone.
+
+### Starting the task
+You may notice, that your terminal opened multiple tabs. Consult the first page of the [MRS Cheatsheet](https://github.com/ctu-mrs/mrs_cheatsheet) if you need help navigating the tabs and panes.
+**After the UAVs take off, your input has to be provided manually.** 
+
+* Navigate to the `goto_start` tab, hit up arrow key and then enter. There is a pre-filled series of commands, which will load the Leader trajectory and take both UAVs to their starting position.
+* Switch to the `follower` tab, hit the up arrow and then enter. The pre-filled command will launch the `summer_school_supervisor`. This is the program, which will periodically call your code.
+* Finally, switch to the `start_challenge` tab, hit the up arrow and pres enter. The leader will begin tracking the trajectory, and the score counter will start.
+* Now, you can navigate back to the `follower` tab, and observe the simulation. Once the visual contact is broken, the process in the follower tab will print out the score.
 
 ## Implementation tips
 You may notice that the reference solution does not produce a smooth control input for the follower UAV. Also, the following may break after a while. The jumps in follower motion are caused by multiple contributing factors:
@@ -46,7 +66,10 @@ You may notice that the reference solution does not produce a smooth control inp
 
 LET'S IMPROVE THE FOLLOWER CODE.
 There are a few steps that may help you. It is not necessary to follow them. You may skip this section completely and craft a solution on your own.
-  * The first course of action should be ensuring that the leader is always visible by the follower. Once you break the visual contact, you lose the leader position updates and cannot procceed.
-  * Next, you will probably want to smooth out the motion of the follower. You can precompute multiple references and construct a trajectory for a few seconds into the future, utilize the SpeedTracker, employ the VelocityEstimator....
-  * The leader trajectory gets progressively more difficult to follow. Therefore, you can easily assess the quality of your solution by measuring how long can the follower keep the pace.
-  * Since in vision distance to an object tends to be more difficult to estimate than its bearing, the position tracking works much better if the line of sight from camera is directly perpendicular to the direction of leader's motion. If the leader moves along the line of sight from the camera, retrieving the position becomes much more difficult.
+  * Experiment with the desired offset. You may get better results just by adjusting the distance between the leader and the follower. You can use the [config/follower.yaml](https://github.com/ctu-mrs/uvdar_leader_follower/blob/master/config/follower.yaml) if you want to change the settings without the need for compilation. (You will still need to restart the node.)
+  * Experiment with the control action rate, also adjustable in the config file.
+  * Estimate the leader's velocity. An estimator based on the Kalman filter is already provided in the code, but in the default solution it is unused. Filter parameters may be loaded from the config file as well.
+  * You can give the follower three types of control commands: ReferencePoint (this is done in the default solution), ReferenceTrajectory and SpeedCommand. Inside each command, there is a boolean variable called `use_for_control`. If you set this value to `true`, the supervisor node will attempt to use this command for control.
+  * If multiple commands are available at the same time, only the highest ranking command in the following hierarchy will be used: SpeedCommand > ReferenceTrajectory > ReferencePoint.
+  * In computer vision, distance to an object tends to be more difficult to estimate than its bearing. Therefore, the position tracking works much better if the line of sight from camera is directly perpendicular to the direction of leader's motion. If the leader moves along the line of sight from the camera, retrieving the position becomes much more difficult.
+  * You are not required to perfectly copy the leader's trajectory. You only have to track the leader for as long as possible.
