@@ -218,18 +218,25 @@ ReferenceTrajectory FollowerController::createReferenceTrajectory() {
     if (use_estimator) {
       point_1   = follower_position_tracker;
       heading_1 = follower_heading_tracker;
-
-      point_2   = leader_predicted_position + position_offset + (leader_predicted_velocity * control_action_interval);
-      auto ref_head = atan2(leader_predicted_position.y() - point_1.y(), leader_predicted_position.x() - point_1.x());
-      
-      heading_2 = ref_head + heading_offset;
-      point_2.z() = sss_util::saturation(point_2.z(), MIN_HEIGHT, MAX_HEIGHT);
-
       trajectory.positions.push_back(point_1);
-      trajectory.positions.push_back(point_2);
-
       trajectory.headings.push_back(heading_1);
-      trajectory.headings.push_back(heading_2);
+
+      auto ref_head = atan2(leader_predicted_position.y() - point_1.y(), leader_predicted_position.x() - point_1.x());
+      int counter = 1;
+      for (double i = 0.1; i <= 1; i += 0.05) {
+        auto new_velocity = i * leader_predicted_velocity + (1-i) * follower_linear_velocity_tracker;
+        Eigen::Vector3d newPoint = leader_predicted_position + position_offset + new_velocity * control_action_interval * counter;
+        counter++;
+        
+        if ( (newPoint - point_1).norm() > 14) {
+          break;
+        }
+
+        newPoint.z() = sss_util::saturation(newPoint.z(), MIN_HEIGHT, MAX_HEIGHT);
+        trajectory.positions.push_back(newPoint);
+        trajectory.headings.push_back(ref_head + heading_offset);
+      }
+
       trajectory.sampling_time   = control_action_interval;
       trajectory.use_for_control = true;
     } else {
@@ -271,7 +278,7 @@ SpeedCommand FollowerController::createSpeedCommand() {
       gain = sss_util::saturation(gain, - MAX_VEL, MAX_VEL);
       velocity_setpoint = gain * velocity_setpoint;
     } else {
-      ROS_WARN("TO CLOSE!");
+      //ROS_WARN("TO CLOSE!");
       // we are close to the UAV - go BACK
       velocity_setpoint = position_error + position_offset;
       velocity_setpoint.normalize();
