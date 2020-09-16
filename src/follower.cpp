@@ -32,6 +32,8 @@ bool            use_trajectory_reference = false;
 // constants
 static constexpr auto MAX_HEIGHT = 3.8;
 static constexpr auto MIN_HEIGHT = 2.2;
+static constexpr auto MAX_VEL = 4.5;
+static constexpr auto POS_ERROR_GAIN = 1;
 
 VelocityEstimator estimator;
 Eigen::Vector3d   leader_predicted_position;
@@ -219,8 +221,8 @@ ReferenceTrajectory FollowerController::createReferenceTrajectory() {
 
       point_2   = leader_predicted_position + position_offset + (leader_predicted_velocity * control_action_interval);
       auto ref_head = atan2(leader_predicted_position.y() - point_1.y(), leader_predicted_position.x() - point_1.x());
-      std::cout << ref_head << "\n";
-      heading_2 =  ref_head + heading_offset;
+      
+      heading_2 = ref_head + heading_offset;
       point_2.z() = sss_util::saturation(point_2.z(), MIN_HEIGHT, MAX_HEIGHT);
 
       trajectory.positions.push_back(point_1);
@@ -251,9 +253,37 @@ SpeedCommand FollowerController::createSpeedCommand() {
   }
 
   if (use_estimator) {
-    command.velocity = leader_predicted_velocity;
+    Eigen::Vector3d position_error = leader_predicted_position - follower_position_tracker;
+    Eigen::Vector3d velocity_setpoint;
+
+    if (position_error.norm() > 4) {
+      // Not close to the UAV - we are good
+
+      // Now we get position error from offseted position
+      position_error += position_offset; 
+
+      // velocity_setpoint = error + feedforward
+      velocity_setpoint += POS_ERROR_GAIN * position_error + leader_predicted_velocity;
+      
+      // scale the velocity setpoint
+      auto gain = velocity_setpoint.norm();
+      velocity_setpoint.normalize();
+      gain = sss_util::saturation(gain, - MAX_VEL, MAX_VEL);
+      velocity_setpoint = gain * velocity_setpoint;
+    } else {
+      ROS_WARN("TO CLOSE!");
+      // we are close to the UAV - go BACK
+      velocity_setpoint = position_error + position_offset;
+      velocity_setpoint.normalize();
+      velocity_setpoint = MAX_VEL * velocity_setpoint;
+    }
+    
+    command.velocity = velocity_setpoint;
     command.height   = leader_predicted_position.z() + position_offset.z();
-    command.heading  = follower_heading_odometry;
+    command.height = sss_util::saturation(command.height, MIN_HEIGHT, MAX_HEIGHT);
+
+    auto ref_head = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+    command.heading  = ref_head + heading_offset;
   }
 
   if (use_speed_tracker) {
