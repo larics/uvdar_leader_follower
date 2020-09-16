@@ -15,14 +15,30 @@ heading_offset: -0.4 # [rad]
 # Noise parameters of the Kalman velocity estimator
 
 # Process noise
-Q: [10, 0, 0, 0, 0, 0,
-    0, 10, 0, 0, 0, 0,
-    0, 0, 10, 0, 0, 0,
+Q: [8, 0, 0, 0, 0, 0,
+    0, 8, 0, 0, 0, 0,
+    0, 0, 8, 0, 0, 0,
     0, 0, 0, 3, 0, 0,
     0, 0, 0, 0, 3, 0,
     0, 0, 0, 0, 0, 3]
 
 # # Measurement noise
-R: [30, 0, 0,
-    0, 30, 0,
-    0, 0, 30]
+R: [22.5, 0, 0,
+    0, 22.5, 0,
+    0, 0, 22.5]
+
+
+
+## Parameters for trajectory approach with 1m/s velocity constraint
+# Process noise
+#Q: [8, 0, 0, 0, 0, 0,
+#    0, 8, 0, 0, 0, 0,
+#    0, 0, 8, 0, 0, 0,
+#    0, 0, 0, 3, 0, 0,
+#    0, 0, 0, 0, 3, 0,
+#    0, 0, 0, 0, 0, 3]
+
+# Measurement noise
+#R: [22.5, 0, 0,
+#    0, 22.5, 0,
+#    0, 0, 22.5]
