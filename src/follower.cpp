@@ -1,5 +1,7 @@
 #include <uvdar_leader_follower/follower.h>
 #include <uvdar_leader_follower/FollowerConfig.h>
+#include <uvdar_leader_follower/util.h>
+#include <cmath>
 
 bool is_initialized     = false;
 bool got_odometry       = false;
@@ -26,6 +28,10 @@ double          uvdar_msg_interval       = 0.1;
 bool            use_estimator            = false;
 bool            use_speed_tracker        = false;
 bool            use_trajectory_reference = false;
+
+// constants
+static constexpr auto MAX_HEIGHT = 3.8;
+static constexpr auto MIN_HEIGHT = 2.2;
 
 VelocityEstimator estimator;
 Eigen::Vector3d   leader_predicted_position;
@@ -70,7 +76,6 @@ uvdar_leader_follower::FollowerConfig FollowerController::initialize(mrs_lib::Pa
   initial_states << follower_position_odometry.x() - position_offset.x(), follower_position_odometry.y() - position_offset.y(),
       follower_position_odometry.z() - position_offset.z(), 0, 0, 0;
   estimator = VelocityEstimator(Q, R, initial_states, uvdar_msg_interval);
-
 
   is_initialized = true;
   return config;
@@ -164,9 +169,13 @@ ReferencePoint FollowerController::createReferencePoint() {
   }
 
   if (use_estimator) {
-    point.position.x() = leader_predicted_position.x() + position_offset.x();
-    point.position.y() = leader_predicted_position.y() + position_offset.y();
+    static auto old_time = ros::Time::now().toSec();
+    auto new_time = ros::Time::now().toSec();
+    auto dt = new_time - old_time;
+    point.position.x() = leader_predicted_position.x() + position_offset.x() + leader_predicted_velocity.x() * dt;
+    point.position.y() = leader_predicted_position.y() + position_offset.y() + leader_predicted_velocity.y() * dt;
     point.position.z() = leader_predicted_position.z() + position_offset.z();
+    old_time = new_time;
   } else {
     point.position.x() = leader_position.x() + position_offset.x();
     point.position.y() = leader_position.y() + position_offset.y();
@@ -174,6 +183,8 @@ ReferencePoint FollowerController::createReferencePoint() {
   }
   point.heading         = heading_offset;
   point.use_for_control = true;
+  
+  point.position.z() = sss_util::saturation(point.position.z(), MIN_HEIGHT, MAX_HEIGHT);
 
   return point;
 }
@@ -207,7 +218,10 @@ ReferenceTrajectory FollowerController::createReferenceTrajectory() {
       heading_1 = follower_heading_tracker;
 
       point_2   = leader_predicted_position + position_offset + (leader_predicted_velocity * control_action_interval);
-      heading_2 = heading_offset;
+      auto ref_head = atan2(leader_predicted_position.y() - point_1.y(), leader_predicted_position.x() - point_1.x());
+      std::cout << ref_head << "\n";
+      heading_2 =  ref_head + heading_offset;
+      point_2.z() = sss_util::saturation(point_2.z(), MIN_HEIGHT, MAX_HEIGHT);
 
       trajectory.positions.push_back(point_1);
       trajectory.positions.push_back(point_2);

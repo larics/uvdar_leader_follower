@@ -10,7 +10,7 @@ desired_offset:
   z: 0.0 # [m]
 
 # rotation offset around the world vertical axis
-heading_offset: 0.3 # [rad]
+heading_offset: -0.4 # [rad]
 
 # Noise parameters of the Kalman velocity estimator
 
@@ -18,11 +18,11 @@ heading_offset: 0.3 # [rad]
 Q: [10, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 0,
     0, 0, 10, 0, 0, 0,
-    0, 0, 0, 1, 0, 0,
-    0, 0, 0, 0, 1, 0,
-    0, 0, 0, 0, 0, 1]
+    0, 0, 0, 3, 0, 0,
+    0, 0, 0, 0, 3, 0,
+    0, 0, 0, 0, 0, 3]
 
 # # Measurement noise
-R: [75, 0, 0,
-    0, 75, 0,
-    0, 0, 75]
+R: [30, 0, 0,
+    0, 30, 0,
+    0, 0, 30]
