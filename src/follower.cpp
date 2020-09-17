@@ -2,6 +2,7 @@
 #include <uvdar_leader_follower/FollowerConfig.h>
 #include <uvdar_leader_follower/util.h>
 #include <cmath>
+using namespace std;
 
 bool is_initialized     = false;
 bool got_odometry       = false;
@@ -34,6 +35,7 @@ static constexpr auto MAX_HEIGHT = 3.8;
 static constexpr auto MIN_HEIGHT = 2.2;
 static constexpr auto MAX_VEL = 4.5;
 static constexpr auto POS_ERROR_GAIN = 1;
+int cnt = 0;
 
 VelocityEstimator estimator;
 Eigen::Vector3d   leader_predicted_position;
@@ -255,31 +257,56 @@ SpeedCommand FollowerController::createSpeedCommand() {
   if (use_estimator) {
     Eigen::Vector3d position_error = leader_predicted_position - follower_position_tracker;
     Eigen::Vector3d velocity_setpoint;
+    Eigen::Vector3d position_controller_output;
+    cnt++;
 
-    if (position_error.norm() > 4) {
-      // Not close to the UAV - we are good
+    // Not close to the UAV - we are good
 
-      // Now we get position error from offseted position
-      position_error += position_offset; 
+    // Now we get position error from offseted position
+    position_error += position_offset; 
 
-      // velocity_setpoint = error + feedforward
-      velocity_setpoint += POS_ERROR_GAIN * position_error + leader_predicted_velocity;
-      
-      // scale the velocity setpoint
-      auto gain = velocity_setpoint.norm();
-      velocity_setpoint.normalize();
-      gain = sss_util::saturation(gain, - MAX_VEL, MAX_VEL);
-      velocity_setpoint = gain * velocity_setpoint;
-    } else {
-      ROS_WARN("TO CLOSE!");
-      // we are close to the UAV - go BACK
-      velocity_setpoint = position_error + position_offset;
-      velocity_setpoint.normalize();
-      velocity_setpoint = MAX_VEL * velocity_setpoint;
+    // position controller output, also saturate it
+    position_controller_output = 1.2 * position_error;
+    auto pos_mag = position_controller_output.norm();
+    pos_mag = sss_util::saturation(pos_mag, -2.5, 2.5); //1.5
+    if (pos_mag < 0.0){
+      cout << "pos_mag " << pos_mag << endl;
     }
+    // OVO TREBA PROVJERITI!!
+    position_controller_output.normalize();
+    position_controller_output *= pos_mag;
+
+    // Saturate leader predicted velocity, it should not exceed 3m/s
+    auto vel_mag = leader_predicted_velocity.norm()*2.0;
+    vel_mag = sss_util::saturation(vel_mag, -5.0, 5.0); //  3
+    //cout << vel_mag << endl;
+    if (vel_mag < 0.0){
+      cout << "vel_mag " << vel_mag << endl;
+    }
+    Eigen::Vector3d saturated_leader_velocity = leader_predicted_velocity;
+    saturated_leader_velocity.normalize();
+    saturated_leader_velocity *= vel_mag;
+
+    double start_feedforward = 0.0;
+    if (cnt > 1){
+      start_feedforward = 1.0;
+      ROS_INFO_ONCE("Starting feedforward!");
+    }
+    velocity_setpoint = position_controller_output + saturated_leader_velocity*start_feedforward;
+    velocity_setpoint[2] = 0.0;
+    //double final_mag = velocity_setpoint.norm();
+    //final_mag = sss_util::saturation(final_mag, -4.9, 4.9);
+    //velocity_setpoint.normalize();
+    //velocity_setpoint *= final_mag;
     
+    //velocity_setpoint = leader_predicted_velocity;
+    //cout << "vel setpoint " << endl << velocity_setpoint << endl << endl;
+    
+    //command.velocity = leader_predicted_velocity; //velocity_setpoint;
     command.velocity = velocity_setpoint;
+    command.velocity[2] = 0.0;
     command.height   = leader_predicted_position.z() + position_offset.z();
+    command.heading  = follower_heading_odometry;
     command.height = sss_util::saturation(command.height, MIN_HEIGHT, MAX_HEIGHT);
 
     auto ref_head = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
