@@ -259,25 +259,25 @@ SpeedCommand FollowerController::createSpeedCommand() {
 
   if (use_estimator) {
     position_error_old = position_error;
-    position_error = leader_predicted_position - follower_position_tracker;
+    position_error = leader_predicted_position - follower_position_odometry;
     Eigen::Vector3d velocity_setpoint;
     Eigen::Vector3d position_controller_output;
     cnt++;
 
     // Calculate position offset dynamically
     double offset = 7.0;
-    double yaw = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+    double yaw = atan2(leader_predicted_position.y() - follower_position_odometry.y(), leader_predicted_position.x() - follower_position_odometry.x());
     Eigen::Vector3d dynamic_position_offset;
     dynamic_position_offset[0] = -cos(yaw)*offset;
     dynamic_position_offset[1] = -sin(yaw)*offset;
     dynamic_position_offset[2] = 0.0;
 
     // Now we get position error from offseted position
-    position_error += dynamic_position_offset;
+    position_error += dynamic_position_offset;//position_offset;//dynamic_position_offset;
 
     // position controller output, also saturate it
-    Eigen::Vector3d P = 6.0 * position_error;
-    Eigen::Vector3d D = 9.0 * (position_error - position_error_old)/control_action_interval;
+    Eigen::Vector3d P = 0.5 * position_error;
+    Eigen::Vector3d D = 0.7 * (position_error - position_error_old)/control_action_interval;
     position_controller_output = P+D;
     auto pos_mag = position_controller_output.norm();
     //pos_mag = sss_util::saturation(pos_mag, -1.5, 1.5);
@@ -302,7 +302,7 @@ SpeedCommand FollowerController::createSpeedCommand() {
     double start_speed_tracker = 0.0;
     if (cnt > 400){
       start_speed_tracker = 1.0;
-      ROS_INFO_ONCE("Starting speed tracker!");
+      ROS_INFO_ONCE("Pozor! Spustim rizeni rychlosti!");
     }
     velocity_setpoint = (position_controller_output + saturated_leader_velocity)*start_speed_tracker;
     velocity_setpoint[2] = 0.0;
@@ -310,13 +310,16 @@ SpeedCommand FollowerController::createSpeedCommand() {
     final_mag = sss_util::saturation(final_mag, -4.95, 4.95);
     velocity_setpoint.normalize();
     velocity_setpoint *= final_mag;
+    if (final_mag > 4.94) cout << "Saturated " << cnt << endl;
     
     //velocity_setpoint = leader_predicted_velocity;
     //cout << "vel setpoint " << endl << velocity_setpoint << endl << endl;
 
     // max speed back if the distance is less than x meters
-    if ((leader_predicted_position - follower_position_tracker).norm() < 4.0){
-      ROS_INFO("Blizu bome");
+    double yaw2 = atan2(leader_predicted_velocity.y(), leader_predicted_velocity.x());
+    if ((leader_predicted_position - follower_position_odometry).norm() < 5.75/* ||
+      ((fabs(yaw2+yaw) < 0.15) && leader_predicted_velocity.norm() > 1.0)*/){
+      ROS_INFO("Nebezpeci! Bude to blizko.");
       velocity_setpoint[0] = -cos(yaw)*4.9;
       velocity_setpoint[1] = -sin(yaw)*4.9;
       velocity_setpoint[2] = 0.0;
@@ -329,7 +332,7 @@ SpeedCommand FollowerController::createSpeedCommand() {
     command.heading  = follower_heading_odometry;
     command.height = sss_util::saturation(command.height, MIN_HEIGHT, MAX_HEIGHT);
 
-    auto ref_head = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+    auto ref_head = atan2(leader_predicted_position.y() - follower_position_odometry.y(), leader_predicted_position.x() - follower_position_odometry.x());
     command.heading  = ref_head + heading_offset;
   }
 
