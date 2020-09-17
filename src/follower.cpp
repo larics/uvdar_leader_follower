@@ -268,7 +268,7 @@ SpeedCommand FollowerController::createSpeedCommand() {
     // position controller output, also saturate it
     position_controller_output = 1.2 * position_error;
     auto pos_mag = position_controller_output.norm();
-    pos_mag = sss_util::saturation(pos_mag, -2.5, 2.5); //1.5
+    pos_mag = sss_util::saturation(pos_mag, -1.5, 1.5);
     if (pos_mag < 0.0){
       cout << "pos_mag " << pos_mag << endl;
     }
@@ -278,7 +278,7 @@ SpeedCommand FollowerController::createSpeedCommand() {
 
     // Saturate leader predicted velocity, it should not exceed 3m/s
     auto vel_mag = leader_predicted_velocity.norm()*2.0;
-    vel_mag = sss_util::saturation(vel_mag, -5.0, 5.0); //  3
+    vel_mag = sss_util::saturation(vel_mag, -3.0, 3.0);
     //cout << vel_mag << endl;
     if (vel_mag < 0.0){
       cout << "vel_mag " << vel_mag << endl;
