@@ -26,8 +26,8 @@ ros::Time       last_leader_contact;
 Eigen::Vector3d position_offset          = Eigen::Vector3d(0.0, 0.0, 0.0);
 double          heading_offset           = 0.0;
 double          uvdar_msg_interval       = 0.1;
-bool            use_estimator            = false;
-bool            use_speed_tracker        = false;
+bool            use_estimator            = true;
+bool            use_speed_tracker        = true;
 bool            use_trajectory_reference = false;
 
 // constants
@@ -39,7 +39,10 @@ int cnt = 0;
 
 VelocityEstimator estimator;
 Eigen::Vector3d   leader_predicted_position;
+Eigen::Vector3d   leader_predicted_position_old;
 Eigen::Vector3d   leader_predicted_velocity;
+Eigen::Vector3d   position_error;
+Eigen::Vector3d   position_error_old;
 
 /* initialize //{ */
 uvdar_leader_follower::FollowerConfig FollowerController::initialize(mrs_lib::ParamLoader& param_loader) {
@@ -255,20 +258,29 @@ SpeedCommand FollowerController::createSpeedCommand() {
   }
 
   if (use_estimator) {
-    Eigen::Vector3d position_error = leader_predicted_position - follower_position_tracker;
+    position_error_old = position_error;
+    position_error = leader_predicted_position - follower_position_tracker;
     Eigen::Vector3d velocity_setpoint;
     Eigen::Vector3d position_controller_output;
     cnt++;
 
-    // Not close to the UAV - we are good
+    // Calculate position offset dynamically
+    double offset = 7.0;
+    double yaw = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+    Eigen::Vector3d dynamic_position_offset;
+    dynamic_position_offset[0] = -cos(yaw)*offset;
+    dynamic_position_offset[1] = -sin(yaw)*offset;
+    dynamic_position_offset[2] = 0.0;
 
     // Now we get position error from offseted position
-    position_error += position_offset; 
+    position_error += dynamic_position_offset;
 
     // position controller output, also saturate it
-    position_controller_output = 1.2 * position_error;
+    Eigen::Vector3d P = 6.0 * position_error;
+    Eigen::Vector3d D = 9.0 * (position_error - position_error_old)/control_action_interval;
+    position_controller_output = P+D;
     auto pos_mag = position_controller_output.norm();
-    pos_mag = sss_util::saturation(pos_mag, -1.5, 1.5);
+    //pos_mag = sss_util::saturation(pos_mag, -1.5, 1.5);
     if (pos_mag < 0.0){
       cout << "pos_mag " << pos_mag << endl;
     }
@@ -277,8 +289,8 @@ SpeedCommand FollowerController::createSpeedCommand() {
     position_controller_output *= pos_mag;
 
     // Saturate leader predicted velocity, it should not exceed 3m/s
-    auto vel_mag = leader_predicted_velocity.norm()*2.0;
-    vel_mag = sss_util::saturation(vel_mag, -3.0, 3.0);
+    auto vel_mag = leader_predicted_velocity.norm()*1.0;
+    //vel_mag = sss_util::saturation(vel_mag, -3.5, 3.5);
     //cout << vel_mag << endl;
     if (vel_mag < 0.0){
       cout << "vel_mag " << vel_mag << endl;
@@ -287,20 +299,28 @@ SpeedCommand FollowerController::createSpeedCommand() {
     saturated_leader_velocity.normalize();
     saturated_leader_velocity *= vel_mag;
 
-    double start_feedforward = 0.0;
-    if (cnt > 1){
-      start_feedforward = 1.0;
-      ROS_INFO_ONCE("Starting feedforward!");
+    double start_speed_tracker = 0.0;
+    if (cnt > 400){
+      start_speed_tracker = 1.0;
+      ROS_INFO_ONCE("Starting speed tracker!");
     }
-    velocity_setpoint = position_controller_output + saturated_leader_velocity*start_feedforward;
+    velocity_setpoint = (position_controller_output + saturated_leader_velocity)*start_speed_tracker;
     velocity_setpoint[2] = 0.0;
-    //double final_mag = velocity_setpoint.norm();
-    //final_mag = sss_util::saturation(final_mag, -4.9, 4.9);
-    //velocity_setpoint.normalize();
-    //velocity_setpoint *= final_mag;
+    double final_mag = velocity_setpoint.norm();
+    final_mag = sss_util::saturation(final_mag, -4.95, 4.95);
+    velocity_setpoint.normalize();
+    velocity_setpoint *= final_mag;
     
     //velocity_setpoint = leader_predicted_velocity;
     //cout << "vel setpoint " << endl << velocity_setpoint << endl << endl;
+
+    // max speed back if the distance is less than x meters
+    if ((leader_predicted_position - follower_position_tracker).norm() < 4.0){
+      ROS_INFO("Blizu bome");
+      velocity_setpoint[0] = -cos(yaw)*4.9;
+      velocity_setpoint[1] = -sin(yaw)*4.9;
+      velocity_setpoint[2] = 0.0;
+    }
     
     //command.velocity = leader_predicted_velocity; //velocity_setpoint;
     command.velocity = velocity_setpoint;
@@ -332,6 +352,7 @@ nav_msgs::Odometry FollowerController::getCurrentEstimate() {
   nav_msgs::Odometry leader_est;
 
   if (use_estimator) {
+    leader_predicted_position_old = leader_predicted_position;
     auto leader_prediction          = estimator.predict(Eigen::Vector3d(0, 0, 0), control_action_interval);
     leader_predicted_position       = Eigen::Vector3d(leader_prediction[0], leader_prediction[1], leader_prediction[2]);
     leader_predicted_velocity       = Eigen::Vector3d(leader_prediction[3], leader_prediction[4], leader_prediction[5]);
